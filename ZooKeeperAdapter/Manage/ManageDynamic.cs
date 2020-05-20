@@ -1,14 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ZooKeeperNet;
 
 namespace ZookeeperAdapter.Manage
 {
-    abstract class ManageDynamic: IWatcher
+    abstract class ManageDynamic: IWatcher, IZookeeperAdapter
     {
-        abstract protected ZooKeeper zk { get; }
-        public Dictionary<string, string> item { get { return _item; } set { _item = value; } }
+        public ZooKeeper zk { get { return ZooKeeperAdapter._zk; } }
+        public Dictionary<string, string> item { get { return _item; } internal set { _item = value; } }
+        public event ItemEvent itemHandler;
         protected Dictionary<string, string> _item = new Dictionary<string, string>();
         protected void Manage(string path, EventType type, KeeperState state)
         {
@@ -35,6 +37,7 @@ namespace ZookeeperAdapter.Manage
                 default:
                     break;
             }
+            itemHandler?.Invoke(item);
         }
         protected string GetValue(string path)
         {
@@ -66,5 +69,6 @@ namespace ZookeeperAdapter.Manage
                     break;
             }
         }
+        
     }
 }

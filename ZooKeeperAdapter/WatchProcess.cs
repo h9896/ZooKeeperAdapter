@@ -27,7 +27,6 @@ namespace ZookeeperAdapter
                 default:
                     break;
             }
-            throw new NotImplementedException();
         }
     }
 }

@@ -7,8 +7,11 @@ using ZooKeeperNet;
 
 namespace ZookeeperAdapter
 {
-    internal interface IZookeeperAdapter
+    public interface IZookeeperAdapter
     {
-        Dictionary<string, string> item { get; set; }
+        Dictionary<string, string> item { get; }
+        ZooKeeper zk { get; }
+        event ItemEvent itemHandler;
     }
+    public delegate void ItemEvent(Dictionary<string, string> item);
 }

@@ -10,6 +10,6 @@ namespace ZookeeperAdapter.Manage.Static
 {
     internal class Config : ManageStatic
     {
-        protected override ZooKeeper zk { get { return ZooKeeperAdapter._zk; }}
+
     }
 }

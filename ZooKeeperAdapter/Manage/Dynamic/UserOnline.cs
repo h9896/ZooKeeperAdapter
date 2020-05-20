@@ -9,6 +9,6 @@ namespace ZookeeperAdapter.Manage.Dynamic
 {
     internal class UserOnline: ManageDynamic
     {
-        protected override ZooKeeper zk { get { return ZooKeeperAdapter._zk; } }
+
     }
 }

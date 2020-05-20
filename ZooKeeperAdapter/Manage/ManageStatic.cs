@@ -7,10 +7,11 @@ using ZooKeeperNet;
 
 namespace ZookeeperAdapter.Manage
 {
-    abstract class ManageStatic
+    abstract class ManageStatic: IZookeeperAdapter
     {
-        abstract protected ZooKeeper zk { get; }
-        public Dictionary<string, string> item { get { return _item; } set { _item = value; } }
+        public ZooKeeper zk { get { return ZooKeeperAdapter._zk; } }
+        public Dictionary<string, string> item { get { return _item; } internal set { _item = value; } }
+        public event ItemEvent itemHandler;
         protected Dictionary<string, string> _item = new Dictionary<string, string>();
         protected void Manage(string path)
         {
