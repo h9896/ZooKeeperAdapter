@@ -55,12 +55,10 @@
     <Compile Include="Manage\ManageStatic.cs" />
     <Compile Include="Manage\Static\Config.cs" />
     <Compile Include="Manage\Temporary\AliveNode.cs" />
-    <Compile Include="WatchProcess.cs" />
     <Compile Include="ZooKeeperAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ClassDiagram1.cd" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />

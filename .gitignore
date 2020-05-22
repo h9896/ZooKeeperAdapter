@@ -3,3 +3,6 @@
 packages
 ZooKeeperAdapter/obj
 ZooKeeperAdapter/bin
+*.TMP
+UnitTestZooKeeperAdapter/obj
+UnitTestZooKeeperAdapter/bin
