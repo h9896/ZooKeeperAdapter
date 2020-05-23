@@ -48,13 +48,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Element.cs" />
     <Compile Include="Manage\ManageFactory.cs" />
-    <Compile Include="Manage\Dynamic\UserOnline.cs" />
+    <Compile Include="Manage\Dynamic\DynamicNode.cs" />
     <Compile Include="Manage\ManageDynamic.cs" />
     <Compile Include="IZookeeperAdapter.cs" />
     <Compile Include="Manage\ManageStatic.cs" />
-    <Compile Include="Manage\Static\Config.cs" />
-    <Compile Include="Manage\Temporary\AliveNode.cs" />
+    <Compile Include="Manage\Static\StaticNode.cs" />
+    <Compile Include="Manage\Temporary\TemporyNode.cs" />
     <Compile Include="ZooKeeperAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

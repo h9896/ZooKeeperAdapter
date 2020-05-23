@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using ZookeeperAdapter.Manage;
 using ZooKeeperNet;
 
@@ -56,17 +53,24 @@ namespace ZookeeperAdapter
                 throw errors;
             }
         }
-        public void Initialize(string topicList)
+        public void Initialize(string topic, string path, ManageType type, string nodeName = null)
         {
-            foreach (string topic in topicList.Split('|'))
-            {
-                IZookeeperAdapter adapter = _factory.InitializeManage(topic);
-                adapter.itemHandler += (item) => UpdateItem(item, topic);
-            }
+            IZookeeperAdapter adapter = _factory.InitializeManage(type, path, topic, CareNode, nodeName);
         }
-        private void UpdateItem(Dictionary<string, string> item, string topic)
+        public string CreateNode(string path, byte[] value)
         {
-            CareNode[topic] = item;
+            if (_zk.Exists(path, false) == null)
+            {
+                return _zk.Create(path, value, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+            }
+            return null;
+        }
+        public void DeleteNode(string path)
+        {
+            if (_zk.Exists(path, false) != null)
+            {
+                _zk.Delete(path, -1);
+            }
         }
         public void Process(WatchedEvent @event)
         {

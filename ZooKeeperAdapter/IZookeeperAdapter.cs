@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using ZooKeeperNet;
 
 namespace ZookeeperAdapter
 {
     public interface IZookeeperAdapter
     {
-        Dictionary<string, string> item { get; }
-        ZooKeeper zk { get; }
-        event ItemEvent itemHandler;
+        Dictionary<string, string> Item { get; }
+        ZooKeeper Zk { get; }
+        bool ActiveNode { get; }
+        event ItemEvent ItemHandler;
+        void Start();
     }
-    public delegate void ItemEvent(Dictionary<string, string> item);
+    public delegate void ItemEvent(Dictionary<string, string> Item);
 }
