@@ -11,6 +11,7 @@ namespace ZookeeperAdapter
         public string RootPath { get; private set; }
         public string EndPoint { get; private set; }
         public bool ConnectState { get; private set; }
+        public bool ReConnect { get; private set; }
         public Dictionary<string, Dictionary<string, string>> CareNode { get; private set; }
         static internal ZooKeeper _zk;
         private TimeSpan _timeout;
@@ -18,29 +19,34 @@ namespace ZookeeperAdapter
         private CountdownEvent _connectLock { get; set; }
         private int _lockTimeout { get; set; }
 
-        public ZooKeeperAdapter(string rootPath, string endPoint, TimeSpan sessionTimeout)
+        public ZooKeeperAdapter(string rootPath, string endPoint, TimeSpan sessionTimeout, bool reconnect = false)
         {
             RootPath = rootPath;
             EndPoint = endPoint;
             ConnectState = false;
+            ReConnect = reconnect;
             _timeout = sessionTimeout;
             _lockTimeout = 5000;
-            _connectLock = new CountdownEvent(1);
             CareNode = new Dictionary<string, Dictionary<string, string>>();
         }
-        // SyncConnected
+        /// <summary>
+        /// SyncConnected: Connected ZooKeeper server and lock process until SyncConnectedEvent is received, or 5 seconds have passed.
+        /// </summary>
         public void SyncConnected()
         {
-            if (!ConnectState)
+            if (!CheckConnectState())
             {
+                _connectLock = new CountdownEvent(1);
                 _zk = new ZooKeeper(EndPoint, _timeout, this);
                 _connectLock.Wait(_lockTimeout);
             }
         }
-        // NonSyncConnected
+        /// <summary>
+        /// NonSyncConnected: Connected ZooKeeper server.
+        /// </summary>
         public void NonSyncConnected()
         {
-            if (!ConnectState) _zk = new ZooKeeper(EndPoint, _timeout, this);
+            if (!CheckConnectState()) _zk = new ZooKeeper(EndPoint, _timeout, this);
         }
         public void Close()
         {
@@ -53,6 +59,13 @@ namespace ZookeeperAdapter
                 throw errors;
             }
         }
+        /// <summary>
+        /// Initialize: Register the path, then get the data and put it in CareNode.
+        /// </summary>
+        /// <param name="topic">Dictionary Key in CareNode</param>
+        /// <param name="path">ZooKeeper path</param>
+        /// <param name="type">Manage type</param>
+        /// <param name="nodeName">Temporary nodeName will create</param>
         public void Initialize(string topic, string path, ManageType type, string nodeName = null)
         {
             IZookeeperAdapter adapter = _factory.InitializeManage(type, path, topic, CareNode, nodeName);
@@ -65,6 +78,7 @@ namespace ZookeeperAdapter
             }
             return null;
         }
+        public bool CheckConnectState() { return ConnectState; }
         public void DeleteNode(string path)
         {
             if (_zk.Exists(path, false) != null)
@@ -74,10 +88,23 @@ namespace ZookeeperAdapter
         }
         public void Process(WatchedEvent @event)
         {
-            if (@event.State == KeeperState.SyncConnected)
+            switch (@event.State)
             {
-                ConnectState = true;
-                _connectLock.Signal();
+                case KeeperState.Disconnected:
+                    Close();
+                    ConnectState = false;
+                    break;
+                case KeeperState.SyncConnected:
+                    ConnectState = true;
+                    _connectLock.Signal();
+                    break;
+                case KeeperState.Expired:
+                    Close();
+                    ConnectState = false;
+                    if (ReConnect) { SyncConnected(); }
+                    break;
+                default:
+                    break;
             }
         }
     }
