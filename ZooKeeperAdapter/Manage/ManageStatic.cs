@@ -6,10 +6,9 @@ namespace ZookeeperAdapter.Manage
 {
     abstract class ManageStatic: IZookeeperAdapter
     {
-        public ZooKeeper Zk { get { return ZooKeeperAdapter._zk; } }
+        internal ZooKeeper Zk { get { return ZooKeeperAdapter._zk; } }
         public Dictionary<string, string> Item { get { return _item; } internal set { _item = value; } }
         public event ItemEvent ItemHandler;
-        public bool ActiveNode { get { return false; } }
         protected Dictionary<string, string> _item = new Dictionary<string, string>();
         protected string _path { get; set; }
         public void Start() { Manage(_path); }

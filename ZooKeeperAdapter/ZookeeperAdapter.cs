@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using ZookeeperAdapter.Manage;
 using ZooKeeperNet;
 
@@ -13,6 +15,7 @@ namespace ZookeeperAdapter
         public bool ConnectState { get; private set; }
         public bool ReConnect { get; private set; }
         public Dictionary<string, Dictionary<string, string>> CareNode { get; private set; }
+        public event Connected ConnectedEvent;
         static internal ZooKeeper _zk;
         private TimeSpan _timeout;
         private ManageFactory _factory = new ManageFactory();
@@ -39,20 +42,27 @@ namespace ZookeeperAdapter
                 _connectLock = new CountdownEvent(1);
                 _zk = new ZooKeeper(EndPoint, _timeout, this);
                 _connectLock.Wait(_lockTimeout);
+                if (!CheckConnectState()) { ConnectedEvent?.Invoke(ConnectedType.Fail); }
             }
         }
         /// <summary>
-        /// NonSyncConnected: Connected ZooKeeper server.
+        /// AsyncConnected: Connected ZooKeeper server.
         /// </summary>
-        public void NonSyncConnected()
+        public void AsyncConnected()
         {
+            _connectLock = new CountdownEvent(1);
             if (!CheckConnectState()) _zk = new ZooKeeper(EndPoint, _timeout, this);
+            Task.Run(() => {
+                _connectLock.Wait(_lockTimeout);
+                if (!CheckConnectState()) { ConnectedEvent?.Invoke(ConnectedType.Fail); }
+            });
         }
         public void Close()
         {
             try
             {
                 _zk.Dispose();
+                ConnectState = false;
             }
             catch (ThreadInterruptedException errors)
             {
@@ -66,9 +76,9 @@ namespace ZookeeperAdapter
         /// <param name="path">ZooKeeper path</param>
         /// <param name="type">Manage type</param>
         /// <param name="nodeName">Temporary nodeName will create</param>
-        public void Initialize(string topic, string path, ManageType type, string nodeName = null)
+        public IZookeeperAdapter Initialize(string topic, string path, ManageType type, string nodeName = null)
         {
-            IZookeeperAdapter adapter = _factory.InitializeManage(type, path, topic, CareNode, nodeName);
+            return _factory.InitializeManage(type, path, topic, CareNode, nodeName);
         }
         public string CreateNode(string path, byte[] value)
         {
@@ -77,6 +87,10 @@ namespace ZookeeperAdapter
                 return _zk.Create(path, value, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
             }
             return null;
+        }
+        public string CreateTemporary(string path, byte[] value)
+        {
+            return _zk.Create(path + "/", value, Ids.OPEN_ACL_UNSAFE, CreateMode.EphemeralSequential).Split('/').Last();
         }
         public bool CheckConnectState() { return ConnectState; }
         public void DeleteNode(string path)
@@ -92,15 +106,14 @@ namespace ZookeeperAdapter
             {
                 case KeeperState.Disconnected:
                     Close();
-                    ConnectState = false;
                     break;
                 case KeeperState.SyncConnected:
                     ConnectState = true;
                     _connectLock.Signal();
+                    ConnectedEvent?.Invoke(ConnectedType.Connected);
                     break;
                 case KeeperState.Expired:
                     Close();
-                    ConnectState = false;
                     if (ReConnect) { SyncConnected(); }
                     break;
                 default:

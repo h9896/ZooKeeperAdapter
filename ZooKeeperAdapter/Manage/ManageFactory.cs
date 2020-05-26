@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using ZookeeperAdapter.Manage.Dynamic;
 using ZookeeperAdapter.Manage.Static;
-using ZookeeperAdapter.Manage.Temporary;
 
 namespace ZookeeperAdapter.Manage
 {
@@ -15,21 +14,12 @@ namespace ZookeeperAdapter.Manage
             {
                 case ManageType.Dynamic:
                     Adapter = new DynamicNode(path);
-                    Adapter.ItemHandler += (item) => UpdateItem(dict, item, topicKey);
-                    Adapter.Start();
+                    Register(Adapter, dict, topicKey);
                     return Adapter;
                 case ManageType.Static:
                     Adapter = new StaticNode(path);
-                    Adapter.ItemHandler += (item) => UpdateItem(dict, item, topicKey);
-                    Adapter.Start();
+                    Register(Adapter, dict, topicKey);
                     return Adapter;
-                case ManageType.Temporary:
-                    if (nodeName == null) throw new ArgumentOutOfRangeException($"NodeName is empty!");
-                    TemporyNode TemporyAdapter = new TemporyNode(nodeName, path);
-                    TemporyAdapter.ItemHandler += (item) => UpdateItem(dict, item, topicKey);
-                    TemporyAdapter.Start();
-                    TemporyAdapter.CreateSeq();
-                    return TemporyAdapter;
                 default:
                     throw new ArgumentOutOfRangeException($"Topic:({topic}) out of factory range!");
             }
@@ -38,6 +28,11 @@ namespace ZookeeperAdapter.Manage
         {
             if (!dict.ContainsKey(topic)) dict.Add(topic, item);
             else dict[topic] = item;
+        }
+        private void Register(IZookeeperAdapter adapter, Dictionary<string, Dictionary<string, string>> dict, string topicKey)
+        {
+            adapter.ItemHandler += (item) => UpdateItem(dict, item, topicKey);
+            adapter.Start();
         }
     }
 }

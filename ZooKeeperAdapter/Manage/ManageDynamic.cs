@@ -7,10 +7,9 @@ namespace ZookeeperAdapter.Manage
 {
     abstract class ManageDynamic: IWatcher, IZookeeperAdapter
     {
-        public ZooKeeper Zk { get { return ZooKeeperAdapter._zk; } }
+        internal ZooKeeper Zk { get { return ZooKeeperAdapter._zk; } }
         public Dictionary<string, string> Item { get { return _item; } internal set { _item = value; } }
         public event ItemEvent ItemHandler;
-        public bool ActiveNode { get; protected set; }
         protected Dictionary<string, string> _item = new Dictionary<string, string>();
         protected string _path { get; set; }
         public void Start() { GetFirst(_path); }

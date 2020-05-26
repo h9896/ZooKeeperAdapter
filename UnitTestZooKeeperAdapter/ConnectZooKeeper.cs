@@ -10,14 +10,14 @@ namespace UnitTestZooKeeperAdapter
     [TestFixture]
     public class ConnectZooKeeper
     {
-        [Test, Category("NonSyncConnected")]
+        [Test, Category("AsyncConnected")]
         public void NonSyncConnected()
         {
             ZooKeeperAdapter adapter = GetAdapter();
             CountdownEvent eventStart = new CountdownEvent(1);
             CountdownEvent mainStart = new CountdownEvent(1);
             Task.Run(() => { eventStart.Wait(2000); adapter.Process(GetConnectEvent()); });
-            adapter.NonSyncConnected();
+            adapter.AsyncConnected();
             eventStart.Signal();
             mainStart.Wait(1000);
             Assert.AreEqual(true, adapter.ConnectState);
@@ -31,14 +31,14 @@ namespace UnitTestZooKeeperAdapter
             adapter.SyncConnected();
             Assert.AreEqual(true, adapter.ConnectState);
         }
-        [Test, Category("FailNonSyncConnected")]
+        [Test, Category("FailAsyncConnected")]
         public void FailNonSyncConnected()
         {
             ZooKeeperAdapter adapter = GetAdapter();
             CountdownEvent eventStart = new CountdownEvent(1);
             CountdownEvent mainStart = new CountdownEvent(1);
             Task.Run(() => { eventStart.Wait(2000); adapter.Process(GetNonConnectEvent()); });
-            adapter.NonSyncConnected();
+            adapter.AsyncConnected();
             eventStart.Signal();
             mainStart.Wait(1000);
             Assert.AreEqual(false, adapter.ConnectState);

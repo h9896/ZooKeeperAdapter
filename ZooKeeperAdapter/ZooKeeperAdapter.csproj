@@ -55,7 +55,6 @@
     <Compile Include="IZookeeperAdapter.cs" />
     <Compile Include="Manage\ManageStatic.cs" />
     <Compile Include="Manage\Static\StaticNode.cs" />
-    <Compile Include="Manage\Temporary\TemporyNode.cs" />
     <Compile Include="ZooKeeperAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
