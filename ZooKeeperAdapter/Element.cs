@@ -10,6 +10,7 @@ namespace ZookeeperAdapter
     public enum ConnectedType
     {
         Connected,
+        DisConnected,
         Fail
     }
     public delegate void ItemEvent(Dictionary<string, string> Item);

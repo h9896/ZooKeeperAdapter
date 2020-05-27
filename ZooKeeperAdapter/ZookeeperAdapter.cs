@@ -22,14 +22,14 @@ namespace ZookeeperAdapter
         private CountdownEvent _connectLock { get; set; }
         private int _lockTimeout { get; set; }
 
-        public ZooKeeperAdapter(string rootPath, string endPoint, TimeSpan sessionTimeout, bool reconnect = false)
+        public ZooKeeperAdapter(string rootPath, string endPoint, TimeSpan sessionTimeout, int connectedTimeout, bool reconnect = false)
         {
             RootPath = rootPath;
             EndPoint = endPoint;
             ConnectState = false;
             ReConnect = reconnect;
             _timeout = sessionTimeout;
-            _lockTimeout = 5000;
+            _lockTimeout = connectedTimeout;
             CareNode = new Dictionary<string, Dictionary<string, string>>();
         }
         /// <summary>
@@ -80,6 +80,12 @@ namespace ZookeeperAdapter
         {
             return _factory.InitializeManage(type, path, topic, CareNode, nodeName);
         }
+        /// <summary>
+        /// CreateNode: Create a node.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public string CreateNode(string path, byte[] value)
         {
             if (_zk.Exists(path, false) == null)
@@ -88,11 +94,18 @@ namespace ZookeeperAdapter
             }
             return null;
         }
+        /// <summary>
+        /// CreateTemporary: Create a temporary sequence node below path, and return sequence.
+        /// </summary>
+        /// <param name="path">zookeeper path</param>
+        /// <param name="value">temporary node value</param>
+        /// <returns>if success return sequence, else return null</returns>
         public string CreateTemporary(string path, byte[] value)
         {
-            return _zk.Create(path + "/", value, Ids.OPEN_ACL_UNSAFE, CreateMode.EphemeralSequential).Split('/').Last();
+            if (_zk.Exists(path, false) != null)
+                return _zk.Create(path + "/", value, Ids.OPEN_ACL_UNSAFE, CreateMode.EphemeralSequential).Split('/').Last();
+            return null;
         }
-        public bool CheckConnectState() { return ConnectState; }
         public void DeleteNode(string path)
         {
             if (_zk.Exists(path, false) != null)
@@ -100,12 +113,14 @@ namespace ZookeeperAdapter
                 _zk.Delete(path, -1);
             }
         }
+        public bool CheckConnectState() { return ConnectState; }
         public void Process(WatchedEvent @event)
         {
             switch (@event.State)
             {
                 case KeeperState.Disconnected:
                     Close();
+                    ConnectedEvent?.Invoke(ConnectedType.DisConnected);
                     break;
                 case KeeperState.SyncConnected:
                     ConnectState = true;
