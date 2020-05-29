@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using ZookeeperAdapter.Manage;
@@ -63,6 +64,7 @@ namespace ZookeeperAdapter
             {
                 _zk.Dispose();
                 ConnectState = false;
+                ConnectedEvent?.Invoke(ConnectedType.DisConnected);
             }
             catch (ThreadInterruptedException errors)
             {
@@ -88,7 +90,7 @@ namespace ZookeeperAdapter
         /// <returns></returns>
         public string CreateNode(string path, byte[] value)
         {
-            if (_zk.Exists(path, false) == null)
+            if (!CheckExists(path))
             {
                 return _zk.Create(path, value, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
             }
@@ -102,16 +104,41 @@ namespace ZookeeperAdapter
         /// <returns>if success return sequence, else return null</returns>
         public string CreateTemporary(string path, byte[] value)
         {
-            if (_zk.Exists(path, false) != null)
+            if (CheckExists(path))
                 return _zk.Create(path + "/", value, Ids.OPEN_ACL_UNSAFE, CreateMode.EphemeralSequential).Split('/').Last();
             return null;
         }
         public void DeleteNode(string path)
         {
-            if (_zk.Exists(path, false) != null)
+            if (CheckExists(path))
             {
                 _zk.Delete(path, -1);
             }
+        }
+        public string[] GetChildren(string path)
+        {
+            if (CheckExists(path))
+            {
+                List<string> result = new List<string>();
+                result.AddRange(_zk.GetChildren(path, false));
+                return result.ToArray();
+            }
+            return new List<string>().ToArray();
+        }
+        public string GetValue(string path)
+        {
+            if (CheckExists(path))
+            {
+                byte[] byt = _zk.GetData(path, false, null);
+                string value = byt == null ? "" : Encoding.UTF8.GetString(byt);
+                return value;
+            }
+            return null;
+        }
+        public bool CheckExists(string path)
+        {
+            if (_zk.Exists(path, false) == null) { return false; }
+            else return true;
         }
         public bool CheckConnectState() { return ConnectState; }
         public void Process(WatchedEvent @event)
@@ -120,7 +147,6 @@ namespace ZookeeperAdapter
             {
                 case KeeperState.Disconnected:
                     Close();
-                    ConnectedEvent?.Invoke(ConnectedType.DisConnected);
                     break;
                 case KeeperState.SyncConnected:
                     ConnectState = true;
